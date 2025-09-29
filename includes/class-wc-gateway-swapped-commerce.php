@@ -1,24 +1,31 @@
 <?php
 /**
- * Swapped Pay WooCommerce Gateway
+ * Swapped Commerce WooCommerce Gateway
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
+class WC_Gateway_Swapped_Commerce extends WC_Payment_Gateway {
 
     public $api_key = '';
     public $debug   = 'no';
 
     public function __construct() {
-        $this->id                 = SWAPPED_PAY_WOO_SLUG;
-        $this->method_title       = __( 'Swapped Pay', 'swapped-pay' );
-        $this->method_description = __( 'Accept cryptocurrency payments via Swapped Pay.', 'swapped-pay' );
-        $this->icon               = apply_filters( 'swapped_pay_icon', '' );
+        $this->id                 = SWAPPED_COMMERCE_WOO_SLUG;
+        $this->method_title       = __( 'Swapped Commerce', 'swapped-commerce' );
+        $this->method_description = __( 'Accept cryptocurrency payments via Swapped Commerce.', 'swapped-commerce' );
+        $this->icon = SWAPPED_COMMERCE_WOO_URL . 'assets/img/swapped-commerce-logo.svg';
         $this->has_fields         = false;
         $this->supports           = array( 'products' );
+        
+        
+        add_action( 'init', function () {
+        $this->method_title       = __( 'Swapped Commerce', 'swapped-commerce' );
+        $this->method_description = __( 'Accept cryptocurrency payments via Swapped Commerce.', 'swapped-commerce' );
+        } );
 
         $this->init_form_fields();
         $this->init_settings();
+
 
         $this->title       = $this->get_option( 'title' );
         $this->description = $this->get_option( 'description' );
@@ -36,50 +43,74 @@ class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
     }
 
     public function webhook_hint() {
-        if ( isset( $_GET['section'] ) && $this->id === $_GET['section'] ) {
-            $url = esc_html( rest_url( 'swapped/v1/webhook' ) );
-            echo '<div class="notice notice-info"><p>' .
-                sprintf( __( 'Set your Webhook URL in the Swapped dashboard (<a href="%1$s" target="_blank" rel="noreferrer noopener">Developers</a>) to: <code>%2$s</code>', 'swapped-pay' ),
-                    'https://dashboard.swapped.com/pay/developers', $url ) .
-                '</p></div>';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check for current section.
+        $section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+        if ( $section !== $this->id ) {
+            return;
         }
+    
+        $url       = esc_url( rest_url( 'swapped/v1/webhook' ) );
+        $dash_url  = 'https://dashboard.swapped.com/commerce/developers';
+    
+        /* translators: 1: Swapped dashboard Developers URL, 2: Webhook URL */
+        $markup = sprintf(
+            __( 'Set your Webhook URL in the Swapped dashboard (<a href="%1$s" target="_blank" rel="noreferrer noopener">Developers</a>) to: <code>%2$s</code>', 'swapped-commerce' ),
+            esc_url( $dash_url ),
+            esc_html( $url )
+        );
+    
+        echo '<div class="notice notice-info"><p>' . wp_kses_post( $markup ) . '</p></div>';
     }
 
     public function admin_notices() {
         if ( 'yes' === $this->enabled && empty( $this->api_key ) ) {
-            echo '<div class="notice notice-error"><p>' . esc_html__( 'Swapped Pay is enabled but API Key is missing.', 'swapped-pay' ) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . esc_html__( 'Swapped Commerce is enabled but API Key is missing.', 'swapped-commerce' ) . '</p></div>';
         }
+    }
+    
+    public function get_icon() {
+    $icons  = '<img src="' . SWAPPED_COMMERCE_WOO_URL . 'assets/img/BTC.svg" alt="BTC" style="height:20px; margin-right:4px;" />';
+    $icons .= '<img src="' . SWAPPED_COMMERCE_WOO_URL . 'assets/img/ETH.svg" alt="ETH" style="height:20px; margin-right:4px;" />';
+    $icons .= '<img src="' . SWAPPED_COMMERCE_WOO_URL . 'assets/img/USDT.svg" alt="USDT" style="height:20px; margin-right:4px;" />';
+    $icons .= '<span style="font-size:12px; margin-left:4px;">(+20 more)</span>';
+
+    return apply_filters( 'woocommerce_gateway_icon', $icons, $this->id );
     }
 
     public function init_form_fields() {
         $this->form_fields = array(
             'enabled' => array(
-                'title'   => __( 'Enable/Disable', 'swapped-pay' ),
+                'title'   => __( 'Enable/Disable', 'swapped-commerce' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable Swapped Pay', 'swapped-pay' ),
+                'label'   => __( 'Enable Swapped Commerce', 'swapped-commerce' ),
                 'default' => 'no',
             ),
             'title' => array(
-                'title'   => __( 'Title', 'swapped-pay' ),
+                'title'   => __( 'Title', 'swapped-commerce' ),
                 'type'    => 'text',
-                'default' => __( 'Swapped Pay (Crypto)', 'swapped-pay' ),
+                'default' => __( 'Swapped Commerce (Crypto)', 'swapped-commerce' ),
             ),
             'description' => array(
-                'title'   => __( 'Description', 'swapped-pay' ),
+                'title'   => __( 'Description', 'swapped-commerce' ),
                 'type'    => 'textarea',
-                'default' => __( 'Pay securely with cryptocurrency via Swapped.', 'swapped-pay' ),
+                'default' => __( 'Pay securely with cryptocurrency via Swapped Commerce.', 'swapped-commerce' ),
             ),
             'api_key' => array(
-                'title'       => __( 'API Key', 'swapped-pay' ),
+                'title'       => __( 'API Key', 'swapped-commerce' ),
                 'type'        => 'password',
-                'description' => __( 'Your Swapped API key from dashboard.swapped.com.', 'swapped-pay' ),
+                'description' => __( 'Your Swapped Commerce API key from <a href="https://dashboard.swapped.com/commerce/developers" target="_blank">dashboard.swapped.com</a>.', 'swapped-commerce' ),
                 'default'     => '',
             ),
             'debug' => array(
-                'title'   => __( 'Debug logging', 'swapped-pay' ),
+                'title'   => __( 'Debug logging', 'swapped-commerce' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable logging to WooCommerce → Status → Logs (source: swapped-pay).', 'swapped-pay' ),
+                'label'   => __( 'Enable logging to WooCommerce → Status → Logs (source: swapped-commerce).', 'swapped-commerce' ),
                 'default' => 'no',
+            ),
+            'signup' => array(
+                'title'       => __( 'Don’t have an account?', 'swapped-commerce' ),
+                'type'        => 'title',
+                'description' => __( 'No API key yet? <a href="https://dashboard.swapped.com/commerce/register" target="_blank">Sign up to Swapped Commerce here</a> to get started.', 'swapped-commerce' ),
             ),
         );
     }
@@ -95,7 +126,8 @@ class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
 
         $payload = array(
             'purchase' => array(
-                'name'        => sprintf( __( 'Order #%d', 'swapped-pay' ), $order_id ),
+                /* translators: %d: WooCommerce order ID */
+                'name'        => sprintf( __( 'Order #%d', 'swapped-commerce' ), $order_id ),
                 'description' => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
                 'imageUrl'    => get_site_icon_url() ? get_site_icon_url() : wc_placeholder_img_src(),
                 'price'       => $amount,
@@ -113,13 +145,13 @@ class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
 
         $logger = $this->logger();
         if ( $logger && 'yes' === $this->debug ) {
-            $logger->info( 'Creating Swapped order (request): ' . wp_json_encode( $payload ), array( 'source' => 'swapped-pay' ) );
+            $logger->info( 'Creating Swapped order (request): ' . wp_json_encode( $payload ), array( 'source' => 'swapped-commerce' ) );
         }
 
         $response = $this->api_request( 'POST', '/v1/orders', $payload );
 
         if ( is_wp_error( $response ) ) {
-            wc_add_notice( __( 'Network error connecting to Swapped. Please try again.', 'swapped-pay' ), 'error' );
+            wc_add_notice( __( 'Network error connecting to Swapped. Please try again.', 'swapped-commerce' ), 'error' );
             return array( 'result' => 'failure' );
         }
 
@@ -128,14 +160,14 @@ class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
         $body     = json_decode( $body_raw, true );
 
         if ( $logger && 'yes' === $this->debug ) {
-            $logger->info( 'Create order response (' . $code . '): ' . $body_raw, array( 'source' => 'swapped-pay' ) );
+            $logger->info( 'Create order response (' . $code . '): ' . $body_raw, array( 'source' => 'swapped-commerce' ) );
         }
 
         // Cloudflare challenge or 403?
         if ( false !== stripos( $body_raw, 'cdn-cgi/challenge-platform' ) || $code == 403 ) {
-            $admin_msg = __( 'Swapped API is behind a bot protection challenge (HTTP 403). Ask Swapped to whitelist your server IP or provide an API hostname without challenges.', 'swapped-pay' );
+            $admin_msg = __( 'Swapped API is behind a bot protection challenge (HTTP 403). Ask Swapped to whitelist your server IP or provide an API hostname without challenges.', 'swapped-commerce' );
             if ( current_user_can( 'manage_woocommerce' ) ) wc_add_notice( $admin_msg, 'error' );
-            else wc_add_notice( __( 'Payment temporarily unavailable. Please try another method.', 'swapped-pay' ), 'error' );
+            else wc_add_notice( __( 'Payment temporarily unavailable. Please try another method.', 'swapped-commerce' ), 'error' );
             return array( 'result' => 'failure' );
         }
 
@@ -148,19 +180,19 @@ class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
             $order->save();
 
             if ( empty( $link ) ) {
-                wc_add_notice( __( 'Could not start Swapped Pay session. Please contact support.', 'swapped-pay' ), 'error' );
+                wc_add_notice( __( 'Could not start Swapped Commerce session. Please contact support.', 'swapped-commerce' ), 'error' );
                 return array( 'result' => 'failure' );
             }
 
             // Always pending until webhook confirms payment.
-            $order->update_status( 'pending', __( 'Awaiting crypto payment via Swapped.', 'swapped-pay' ) );
+            $order->update_status( 'pending', __( 'Awaiting crypto payment via Swapped.', 'swapped-commerce' ) );
             WC()->cart->empty_cart();
 
             return array( 'result' => 'success', 'redirect' => $link );
         }
-
-        $message = ( is_array( $body ) && ( $body['message'] ?? '' ) ) ? $body['message'] : sprintf( __( 'Unexpected error creating payment. HTTP %d', 'swapped-pay' ), $code );
-        wc_add_notice( sprintf( __( 'Payment error: %s', 'swapped-pay' ), esc_html( $message ) ), 'error' );
+        /* translators: %s: error message from API */
+        $message = ( is_array( $body ) && ( $body['message'] ?? '' ) ) ? $body['message'] : sprintf( __( 'Unexpected error creating payment. HTTP %d', 'swapped-commerce' ), $code );
+        wc_add_notice( sprintf( __( 'Payment error: %s', 'swapped-commerce' ), esc_html( $message ) ), 'error' );
         return array( 'result' => 'failure' );
     }
 
@@ -173,7 +205,7 @@ class WC_Gateway_Swapped_Pay extends WC_Payment_Gateway {
                 'Content-Type' => 'application/json',
                 'Accept'       => '*/*',
                 'X-API-Key'    => $this->api_key,
-                 'User-Agent' => 'SwappedPayWoo/'. SWAPPED_PAY_WOO_VERSION .' (+'. home_url() .')',
+                'User-Agent'   => 'SwappedPayWoo/'. SWAPPED_COMMERCE_WOO_VERSION .' (+'. home_url() .')',
             ),
             'timeout' => 45,
             'body'    => ! empty( $body ) ? wp_json_encode( $body ) : null,
