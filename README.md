@@ -1,8 +1,8 @@
-# Swapped Pay for WooCommerce
+# Swapped Commerce for WooCommerce
 
-Accept cryptocurrency payments in WooCommerce using Swapped Pay. This plugin adds a payment gateway that redirects customers to Swapped Pay for a secure crypto payment experience, then updates the WooCommerce order when payment is confirmed.
+Accept cryptocurrency payments in WooCommerce using Swapped Commerce. This plugin adds a payment gateway that redirects customers to Swapped Commerce for a secure crypto payment experience, then updates the WooCommerce order when payment is confirmed.
 
-– Version: 1.1.3
+– Version: 1.0.0
 – Requires WordPress: 6.2+
 – Requires WooCommerce: 7.0+
 – Requires PHP: 7.4+
@@ -11,7 +11,7 @@ Accept cryptocurrency payments in WooCommerce using Swapped Pay. This plugin add
 
 1. Download the plugin ZIP
 2. In WordPress Admin: Plugins → Add New → Upload Plugin → select the ZIP → Install Now → Activate
-3. Go to WooCommerce → Settings → Payments → Swapped Pay → Manage
+3. Go to WooCommerce → Settings → Payments → Swapped Commerce → Manage
 4. Enter your Swapped API Key and enable the gateway. Save!
 5. In your Swapped dashboard, set the webhook URL to: `https://your-domain.tld/wp-json/swapped/v1/webhook`
 
@@ -20,7 +20,7 @@ Done — customers can now pay with crypto via Swapped.
 ## Notes
 
 - Supports WooCommerce Checkout Blocks and HPOS *(High-Performance Order Storage)*.
-- Optional debug logging *(WooCommerce → Status → Logs, source: `swapped-pay`)*.
+- Optional debug logging *(WooCommerce → Status → Logs, source: `swapped-commerce`)*.
 
 ## Troubleshooting
 
@@ -30,8 +30,8 @@ Done — customers can now pay with crypto via Swapped.
 
 ## Project 
 
-- `swapped-pay-woocommerce.php`: Bootstrap, gateway registration, REST route, Blocks script registration, settings link
-- `includes/class-wc-gateway-swapped-pay.php`: Gateway (settings, API calls, `process_payment`, notices)
+- `swapped-commerce-woocommerce.php`: Bootstrap, gateway registration, REST route, Blocks script registration, settings link
+- `includes/class-wc-gateway-swapped-commerce.php`: Gateway (settings, API calls, `process_payment`, notices)
 - `assets/js/blocks.js`: Checkout Blocks registration for the payment method
 - `readme.txt`: WordPress.org-style header
 
